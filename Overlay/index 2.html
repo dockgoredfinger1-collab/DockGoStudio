@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stream Overlay Setup</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: rgba(255,255,255,0.07);
+    --accent: #ff0050;
+    --accent2: #00f2ea;
+    --text: #f0f0f0;
+    --muted: #666680;
+    --radius: 14px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 100vh;
+    padding: 40px 20px 80px;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,0,80,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,0,80,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, var(--surface), var(--surface2));
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 8px 20px 8px 8px;
+    margin-bottom: 24px;
+  }
+
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--accent), #ff6b35);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  .logo span {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+
+  h1 {
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+
+  h1 .grad {
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* Steps */
+  .steps {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .step-num {
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(135deg, var(--accent), #ff6b35);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  /* Section cards */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .section:focus-within {
+    border-color: rgba(255,0,80,0.3);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 20px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .section-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .icon-alert    { background: linear-gradient(135deg, #ff0050, #ff6b35); }
+  .icon-leader   { background: linear-gradient(135deg, #7c3aed, #a855f7); }
+  .icon-ticker   { background: linear-gradient(135deg, #0ea5e9, #38bdf8); }
+  .icon-tiktok   { background: linear-gradient(135deg, #ff0050, #00f2ea); }
+  .icon-video    { background: linear-gradient(135deg, #059669, #10b981); }
+  .icon-custom   { background: linear-gradient(135deg, #d97706, #fbbf24); }
+
+  .section-title {
+    flex: 1;
+  }
+
+  .section-title h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  .section-title p {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .section-toggle {
+    font-size: 20px;
+    color: var(--muted);
+    transition: transform 0.2s;
+  }
+
+  .section.collapsed .section-toggle { transform: rotate(-90deg); }
+
+  .section-body {
+    padding: 0 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .section.collapsed .section-body { display: none; }
+
+  /* Form fields */
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  input[type="text"],
+  input[type="url"],
+  input[type="file"],
+  textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 12px 14px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus, textarea:focus {
+    border-color: rgba(255,0,80,0.4);
+  }
+
+  input::placeholder, textarea::placeholder {
+    color: var(--muted);
+    opacity: 0.6;
+  }
+
+  textarea { resize: vertical; min-height: 80px; }
+
+  .hint {
+    font-size: 11px;
+    color: var(--muted);
+    opacity: 0.7;
+    line-height: 1.5;
+  }
+
+  .hint code {
+    background: rgba(255,255,255,0.05);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent2);
+    font-size: 11px;
+  }
+
+  /* File input custom */
+  .file-input-wrap {
+    position: relative;
+  }
+
+  .file-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface2);
+    border: 1px dashed rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 16px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .file-btn:hover {
+    border-color: rgba(255,0,80,0.4);
+    background: rgba(255,0,80,0.05);
+  }
+
+  .file-btn input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  .file-btn-icon { font-size: 24px; }
+  .file-btn-text { flex: 1; }
+  .file-btn-text strong { font-size: 13px; display: block; margin-bottom: 2px; }
+  .file-btn-text span { font-size: 11px; color: var(--muted); }
+  #video-filename { font-size: 12px; color: var(--accent2); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+
+  /* Generate button */
+  .generate-wrap {
+    margin-top: 32px;
+    text-align: center;
+  }
+
+  .btn-generate {
+    background: linear-gradient(135deg, var(--accent), #ff6b35);
+    color: white;
+    border: none;
+    border-radius: 100px;
+    padding: 16px 48px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 8px 32px rgba(255,0,80,0.3);
+  }
+
+  .btn-generate:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(255,0,80,0.45);
+  }
+
+  .btn-generate:active { transform: scale(0.97); }
+
+  /* Result box */
+  #result-box {
+    display: none !important;
+    margin-top: 32px;
+    background: var(--surface);
+    border: 1px solid rgba(0,242,234,0.2);
+    border-radius: var(--radius);
+    padding: 24px;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  #result-box h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent2);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .result-url {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    word-break: break-all;
+    color: var(--accent2);
+    margin-bottom: 12px;
+    line-height: 1.6;
+  }
+
+  .result-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .btn-copy, .btn-open, .btn-control {
+    flex: 1;
+    min-width: 120px;
+    padding: 10px 16px;
+    border-radius: 100px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-copy {
+    background: rgba(0,242,234,0.1);
+    border: 1px solid rgba(0,242,234,0.3);
+    color: var(--accent2);
+  }
+
+  .btn-copy:hover { background: rgba(0,242,234,0.2); }
+
+  .btn-open {
+    background: rgba(255,0,80,0.1);
+    border: 1px solid rgba(255,0,80,0.3);
+    color: var(--accent);
+  }
+
+  .btn-open:hover { background: rgba(255,0,80,0.2); }
+
+  .btn-control {
+    background: rgba(124,58,237,0.1);
+    border: 1px solid rgba(124,58,237,0.3);
+    color: #a855f7;
+  }
+
+  .btn-control:hover { background: rgba(124,58,237,0.2); }
+
+  .result-note {
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: rgba(255,0,80,0.05);
+    border: 1px solid rgba(255,0,80,0.1);
+    border-radius: 10px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  .result-note strong { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">🎮</div>
+      <span>Stream Overlay Manager</span>
+    </div>
+    <h1>Setup <span class="grad">Overlay</span><br>Streammu</h1>
+    <p class="subtitle">Isi URL tiap overlay, lalu generate link untuk dipasang di OBS/Prism Studio</p>
+  </div>
+
+  <!-- Steps -->
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div> Isi semua URL</div>
+    <div class="step"><div class="step-num">2</div> Klik Generate</div>
+    <div class="step"><div class="step-num">3</div> Pasang di OBS/Prism</div>
+  </div>
+
+  <!-- ── Video Background ── -->
+  <div class="section" id="sec-video">
+    <div class="section-header" onclick="toggleSection('sec-video')">
+      <div class="section-icon icon-video">🎬</div>
+      <div class="section-title">
+        <h3>Video Background Overlay</h3>
+        <p>Video looping sebagai background scene</p>
+      </div>
+      <div class="section-toggle">▼</div>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label>Upload Video (Lokal)</label>
+        <div class="file-input-wrap">
+          <div class="file-btn">
+            <div class="file-btn-icon">📁</div>
+            <div class="file-btn-text">
+              <strong>Pilih file video</strong>
+              <span>MP4, WebM, MOV — direkomendasikan 1920×1080</span>
+            </div>
+            <input type="file" id="video-file" accept="video/*" onchange="handleVideoFile(this)">
+          </div>
+        </div>
+        <div id="video-filename"></div>
+        <p class="hint">⚠️ Video harus ada di folder yang sama dengan <code>overlay.html</code> di GitHub. Masukkan nama file-nya di bawah.</p>
+      </div>
+      <div class="field">
+        <label>Nama File Video</label>
+        <input type="text" id="video-path" placeholder="contoh: overlay-bg.mp4">
+        <p class="hint">Nama file video yang sudah di-upload ke GitHub repo (di folder yang sama).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Saweria Alert ── -->
+  <div class="section" id="sec-alert">
+    <div class="section-header" onclick="toggleSection('sec-alert')">
+      <div class="section-icon icon-alert">🔔</div>
+      <div class="section-title">
+        <h3>Saweria Alert (GIF/Animasi)</h3>
+        <p>Notifikasi donasi masuk</p>
+      </div>
+      <div class="section-toggle">▼</div>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label>URL Saweria Alert Widget</label>
+        <input type="url" id="url-alert" placeholder="https://saweria.co/overlay/alert/...">
+        <p class="hint">Ambil dari dashboard Saweria → Widget → Alert → Salin URL</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Saweria Leaderboard ── -->
+  <div class="section" id="sec-leader">
+    <div class="section-header" onclick="toggleSection('sec-leader')">
+      <div class="section-icon icon-leader">🏆</div>
+      <div class="section-title">
+        <h3>Saweria Leaderboard</h3>
+        <p>Top donatur di stream</p>
+      </div>
+      <div class="section-toggle">▼</div>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label>URL Saweria Leaderboard Widget</label>
+        <input type="url" id="url-leaderboard" placeholder="https://saweria.co/overlay/leaderboard/...">
+        <p class="hint">Ambil dari dashboard Saweria → Widget → Leaderboard → Salin URL</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Running Text Ticker ── -->
+  <div class="section" id="sec-ticker">
+    <div class="section-header" onclick="toggleSection('sec-ticker')">
+      <div class="section-icon icon-ticker">📰</div>
+      <div class="section-title">
+        <h3>Running Text / Ticker</h3>
+        <p>Teks berjalan di bagian bawah</p>
+      </div>
+      <div class="section-toggle">▼</div>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label>Isi Running Text</label>
+        <textarea id="ticker-text" placeholder="Selamat datang di stream! | Jangan lupa follow! | Support via Saweria!"></textarea>
+        <p class="hint">Pisahkan tiap kalimat dengan tanda <code>|</code> untuk bergantian tampil</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TikTok Counter ── -->
+  <div class="section" id="sec-tiktok">
+    <div class="section-header" onclick="toggleSection('sec-tiktok')">
+      <div class="section-icon icon-tiktok">🎵</div>
+      <div class="section-title">
+        <h3>TikTok Tap / Counter</h3>
+        <p>Widget jumlah tap atau donasi TikTok Live</p>
+      </div>
+      <div class="section-toggle">▼</div>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label>URL Widget TikTok (opsional)</label>
+        <input type="url" id="url-tiktok" placeholder="https://... (kosongkan jika pakai counter bawaan)">
+        <p class="hint">Jika pakai app pihak ketiga (StreamerBot, TikFinity, dll) masukkan URL-nya. Kosongkan untuk menggunakan counter animasi bawaan.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Custom Overlay 1 ── -->
+  <div class="section collapsed" id="sec-custom1">
+    <div class="section-header" onclick="toggleSection('sec-custom1')">
+      <div class="section-icon icon-custom">⚡</div>
+      <div class="section-title">
+        <h3>Custom Overlay 1</h3>
+        <p>Widget tambahan bebas (kiri bawah area)</p>
+      </div>
+      <div class="section-toggle">▼</div>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label>URL Custom Widget</label>
+        <input type="url" id="url-custom1" placeholder="https://...">
+        <p class="hint">Bisa URL dari StreamElements, Streamlabs, atau widget apapun</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Custom Overlay 2 ── -->
+  <div class="section collapsed" id="sec-custom2">
+    <div class="section-header" onclick="toggleSection('sec-custom2')">
+      <div class="section-icon icon-custom">⚡</div>
+      <div class="section-title">
+        <h3>Custom Overlay 2</h3>
+        <p>Widget tambahan bebas (kanan bawah area)</p>
+      </div>
+      <div class="section-toggle">▼</div>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label>URL Custom Widget</label>
+        <input type="url" id="url-custom2" placeholder="https://...">
+        <p class="hint">Bisa URL dari StreamElements, Streamlabs, atau widget apapun</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generate Button -->
+  <div class="generate-wrap">
+    <button class="btn-generate" onclick="generateLinks()">⚡ Generate Link Overlay</button>
+  </div>
+
+  <!-- Result -->
+  <div id="result-box">
+    <h3>✅ Link Siap Dipakai</h3>
+    <div class="result-url" id="result-overlay-url"></div>
+    <div class="result-actions">
+      <button class="btn-copy" onclick="copyUrl('overlay')">📋 Copy Link Overlay</button>
+      <a class="btn-open" id="btn-open-overlay" href="#" target="_blank">↗ Buka Overlay</a>
+      <a class="btn-control" id="btn-open-control" href="#" target="_blank">🎛️ Buka Panel Kontrol</a>
+    </div>
+    <div class="result-note">
+      <strong>Cara pakai di OBS/Prism:</strong><br>
+      Tambahkan <strong>Browser Source</strong> → paste URL overlay di atas → set width <strong>1920</strong>, height <strong>1080</strong>.<br>
+      Buka <strong>Panel Kontrol</strong> di browser/HP untuk toggle tiap overlay on/off.
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let videoObjectUrl = '';
+
+  function handleVideoFile(input) {
+    const file = input.files[0];
+    if (file) {
+      document.getElementById('video-filename').textContent = '📎 ' + file.name;
+      document.getElementById('video-path').value = file.name;
+    }
+  }
+
+  function toggleSection(id) {
+    document.getElementById(id).classList.toggle('collapsed');
+  }
+
+  function generateLinks() {
+    // Ambil base URL yang bersih — hapus filename & query string
+    const origin = window.location.origin;
+    const pathname = window.location.pathname
+      .replace(/\/index\.html$/, '')  // hapus /index.html
+      .replace(/\/$/, '');            // hapus trailing slash
+    const base = origin + pathname;
+    const overlayBase = base + '/overlay.html';
+    const controlBase = base + '/control.html';
+
+    // Validasi: minimal 1 field harus diisi
+    const hasAnyInput = [
+      document.getElementById('video-path').value.trim(),
+      document.getElementById('url-alert').value.trim(),
+      document.getElementById('url-leaderboard').value.trim(),
+      document.getElementById('ticker-text').value.trim(),
+      document.getElementById('url-tiktok').value.trim(),
+      document.getElementById('url-custom1').value.trim(),
+      document.getElementById('url-custom2').value.trim(),
+    ].some(v => v !== '');
+
+    if (!hasAnyInput) {
+      alert('⚠️ Isi minimal satu field dulu sebelum generate!');
+      return;
+    }
+
+    const params = new URLSearchParams();
+
+    const videoPath = document.getElementById('video-path').value.trim();
+    if (videoPath) params.set('video', videoPath);
+
+    const urlAlert = document.getElementById('url-alert').value.trim();
+    if (urlAlert) params.set('alert', urlAlert);
+
+    const urlLeader = document.getElementById('url-leaderboard').value.trim();
+    if (urlLeader) params.set('leaderboard', urlLeader);
+
+    const tickerText = document.getElementById('ticker-text').value.trim();
+    if (tickerText) params.set('ticker', tickerText);
+
+    const urlTiktok = document.getElementById('url-tiktok').value.trim();
+    if (urlTiktok) params.set('tiktok', urlTiktok);
+
+    const urlC1 = document.getElementById('url-custom1').value.trim();
+    if (urlC1) params.set('custom1', urlC1);
+
+    const urlC2 = document.getElementById('url-custom2').value.trim();
+    if (urlC2) params.set('custom2', urlC2);
+
+    const overlayUrl = overlayBase + '?' + params.toString();
+    const controlUrl = controlBase + '?' + params.toString();
+
+    document.getElementById('result-overlay-url').textContent = overlayUrl;
+    document.getElementById('btn-open-overlay').href = overlayUrl;
+    document.getElementById('btn-open-control').href = controlUrl;
+
+    const box = document.getElementById('result-box');
+    box.style.setProperty('display', 'block', 'important');
+    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function copyUrl(type) {
+    const url = document.getElementById('result-overlay-url').textContent;
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.querySelector('.btn-copy');
+      btn.textContent = '✅ Tersalin!';
+      setTimeout(() => btn.textContent = '📋 Copy Link Overlay', 2000);
+    });
+  }
+</script>
+</body>
+</html>
