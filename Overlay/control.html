@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Overlay Control Panel</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #080810;
+    --surface: #0f0f1a;
+    --surface2: #161625;
+    --border: rgba(255,255,255,0.07);
+    --accent: #ff0050;
+    --accent2: #00f2ea;
+    --purple: #a855f7;
+    --text: #f0f0f0;
+    --muted: #55556a;
+    --radius: 16px;
+    --on: #22c55e;
+    --off: #ef4444;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 100vh;
+    padding: 24px 16px 80px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(255,0,80,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, rgba(0,242,234,0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 500px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--accent), #ff6b35);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .header-text h1 {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .header-text p {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .live-dot {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--on);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .live-dot::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: var(--on);
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+    50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+  }
+
+  /* Overlay cards */
+  .overlay-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  .overlay-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: border-color 0.2s;
+  }
+
+  .overlay-card.is-on  { border-color: rgba(34,197,94,0.25); }
+  .overlay-card.is-off { border-color: rgba(239,68,68,0.2); }
+
+  .card-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+    transition: opacity 0.3s;
+  }
+
+  .is-off .card-icon { opacity: 0.4; filter: grayscale(1); }
+
+  .icon-alert  { background: linear-gradient(135deg, #ff0050, #ff6b35); }
+  .icon-leader { background: linear-gradient(135deg, #7c3aed, #a855f7); }
+  .icon-ticker { background: linear-gradient(135deg, #0ea5e9, #38bdf8); }
+  .icon-tiktok { background: linear-gradient(135deg, #ff0050, #00f2ea); }
+  .icon-custom { background: linear-gradient(135deg, #d97706, #fbbf24); }
+
+  .card-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .card-name {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 3px;
+    transition: opacity 0.3s;
+  }
+
+  .is-off .card-name { opacity: 0.5; }
+
+  .card-status {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .is-on .status-dot  { background: var(--on); }
+  .is-off .status-dot { background: var(--off); }
+  .is-on .card-status  { color: var(--on); }
+  .is-off .card-status { color: var(--off); }
+
+  /* Toggle switch */
+  .toggle-switch {
+    position: relative;
+    width: 52px;
+    height: 28px;
+    flex-shrink: 0;
+  }
+
+  .toggle-switch input { display: none; }
+
+  .toggle-track {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.08);
+    border-radius: 100px;
+    cursor: pointer;
+    transition: background 0.25s;
+    border: 1px solid var(--border);
+  }
+
+  .toggle-track::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    background: var(--muted);
+    border-radius: 50%;
+    transition: transform 0.25s, background 0.25s;
+  }
+
+  .toggle-switch input:checked + .toggle-track {
+    background: rgba(34,197,94,0.2);
+    border-color: rgba(34,197,94,0.4);
+  }
+
+  .toggle-switch input:checked + .toggle-track::after {
+    transform: translateX(24px);
+    background: var(--on);
+  }
+
+  /* TikTok manual counter */
+  .tiktok-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 10px;
+  }
+
+  .tiktok-section h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tiktok-counter-display {
+    text-align: center;
+    padding: 20px 0 16px;
+  }
+
+  .tiktok-num {
+    font-size: 64px;
+    font-weight: 800;
+    background: linear-gradient(90deg, #ff0050, #00f2ea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .tiktok-label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .tiktok-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .tap-btn {
+    padding: 14px 8px;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .tap-btn:active { transform: scale(0.93); }
+
+  .btn-minus {
+    background: rgba(239,68,68,0.12);
+    border: 1px solid rgba(239,68,68,0.25);
+    color: #ef4444;
+  }
+
+  .btn-tap {
+    background: linear-gradient(135deg, rgba(255,0,80,0.2), rgba(0,242,234,0.2));
+    border: 1px solid rgba(255,255,255,0.12);
+    color: white;
+    font-size: 22px;
+  }
+
+  .btn-reset {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  /* Ticker edit */
+  .ticker-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 10px;
+  }
+
+  .ticker-section h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 12px 14px;
+    resize: vertical;
+    min-height: 80px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  textarea:focus { border-color: rgba(255,0,80,0.4); }
+
+  .btn-update {
+    margin-top: 10px;
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(90deg, rgba(255,0,80,0.15), rgba(0,242,234,0.1));
+    border: 1px solid rgba(255,0,80,0.25);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .btn-update:hover { background: linear-gradient(90deg, rgba(255,0,80,0.25), rgba(0,242,234,0.15)); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface2);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 100px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 100;
+    white-space: nowrap;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Back button */
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 20px;
+    transition: color 0.2s;
+  }
+
+  .back-btn:hover { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <a class="back-btn" href="index.html">← Kembali ke Setup</a>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-icon">🎛️</div>
+    <div class="header-text">
+      <h1>Panel Kontrol</h1>
+      <p>Toggle overlay on/off secara real-time</p>
+    </div>
+    <div class="live-dot">Live</div>
+  </div>
+
+  <!-- Overlay toggles -->
+  <div class="overlay-grid">
+
+    <div class="overlay-card is-on" id="card-alert">
+      <div class="card-icon icon-alert">🔔</div>
+      <div class="card-info">
+        <div class="card-name">Saweria Alert</div>
+        <div class="card-status"><div class="status-dot"></div><span class="status-text">Aktif</span></div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" checked onchange="toggleOverlay('alert', this)">
+        <div class="toggle-track"></div>
+      </label>
+    </div>
+
+    <div class="overlay-card is-on" id="card-leaderboard">
+      <div class="card-icon icon-leader">🏆</div>
+      <div class="card-info">
+        <div class="card-name">Saweria Leaderboard</div>
+        <div class="card-status"><div class="status-dot"></div><span class="status-text">Aktif</span></div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" checked onchange="toggleOverlay('leaderboard', this)">
+        <div class="toggle-track"></div>
+      </label>
+    </div>
+
+    <div class="overlay-card is-on" id="card-ticker">
+      <div class="card-icon icon-ticker">📰</div>
+      <div class="card-info">
+        <div class="card-name">Running Text Ticker</div>
+        <div class="card-status"><div class="status-dot"></div><span class="status-text">Aktif</span></div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" checked onchange="toggleOverlay('ticker', this)">
+        <div class="toggle-track"></div>
+      </label>
+    </div>
+
+    <div class="overlay-card is-on" id="card-tiktok">
+      <div class="card-icon icon-tiktok">🎵</div>
+      <div class="card-info">
+        <div class="card-name">TikTok Counter</div>
+        <div class="card-status"><div class="status-dot"></div><span class="status-text">Aktif</span></div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" checked onchange="toggleOverlay('tiktok', this)">
+        <div class="toggle-track"></div>
+      </label>
+    </div>
+
+    <div class="overlay-card is-on" id="card-custom1">
+      <div class="card-icon icon-custom">⚡</div>
+      <div class="card-info">
+        <div class="card-name">Custom Overlay 1</div>
+        <div class="card-status"><div class="status-dot"></div><span class="status-text">Aktif</span></div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" checked onchange="toggleOverlay('custom1', this)">
+        <div class="toggle-track"></div>
+      </label>
+    </div>
+
+    <div class="overlay-card is-on" id="card-custom2">
+      <div class="card-icon icon-custom">⚡</div>
+      <div class="card-info">
+        <div class="card-name">Custom Overlay 2</div>
+        <div class="card-status"><div class="status-dot"></div><span class="status-text">Aktif</span></div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" checked onchange="toggleOverlay('custom2', this)">
+        <div class="toggle-track"></div>
+      </label>
+    </div>
+
+  </div>
+
+  <!-- TikTok manual counter -->
+  <div class="tiktok-section">
+    <h3>🎵 TikTok Tap Counter Manual</h3>
+    <div class="tiktok-counter-display">
+      <div class="tiktok-num" id="ctrl-tiktok-num">0</div>
+      <div class="tiktok-label">Total Taps</div>
+    </div>
+    <div class="tiktok-controls">
+      <button class="tap-btn btn-minus" onclick="adjustTiktok(-1)">
+        <span style="font-size:20px">−</span>
+        <span style="font-size:10px">Kurang</span>
+      </button>
+      <button class="tap-btn btn-tap" onclick="adjustTiktok(1)">
+        👆
+        <span style="font-size:11px;font-weight:600">TAP!</span>
+      </button>
+      <button class="tap-btn btn-reset" onclick="resetTiktok()">
+        <span style="font-size:16px">↺</span>
+        <span style="font-size:10px">Reset</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Ticker text editor -->
+  <div class="ticker-section">
+    <h3>📰 Edit Running Text</h3>
+    <textarea id="ctrl-ticker-text" placeholder="Selamat datang di stream! | Jangan lupa follow! | Support via Saweria!"></textarea>
+    <button class="btn-update" onclick="updateTicker()">↑ Update Ticker di Overlay</button>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  const bc = new BroadcastChannel('overlay_control');
+  let tiktokCount = 0;
+
+  // ── Toggle overlay ──────────────────────────────────────────────────────────
+  function toggleOverlay(slot, checkbox) {
+    const isOn = checkbox.checked;
+    const card = document.getElementById('card-' + slot);
+
+    if (isOn) {
+      card.classList.remove('is-off');
+      card.classList.add('is-on');
+    } else {
+      card.classList.remove('is-on');
+      card.classList.add('is-off');
+    }
+
+    card.querySelector('.status-text').textContent = isOn ? 'Aktif' : 'Nonaktif';
+    bc.postMessage({ action: 'toggle', slot, value: isOn ? 'show' : 'hide' });
+    showToast(isOn ? `✅ ${slot} ditampilkan` : `❌ ${slot} disembunyikan`);
+  }
+
+  // ── TikTok counter ──────────────────────────────────────────────────────────
+  function adjustTiktok(delta) {
+    tiktokCount = Math.max(0, tiktokCount + delta);
+    document.getElementById('ctrl-tiktok-num').textContent = tiktokCount;
+    bc.postMessage({ action: 'tiktok_count', slot: 'tiktok', value: tiktokCount });
+    if (delta > 0) {
+      const el = document.getElementById('ctrl-tiktok-num');
+      el.style.transform = 'scale(1.15)';
+      setTimeout(() => el.style.transform = '', 150);
+    }
+  }
+
+  function resetTiktok() {
+    tiktokCount = 0;
+    document.getElementById('ctrl-tiktok-num').textContent = 0;
+    bc.postMessage({ action: 'tiktok_count', slot: 'tiktok', value: 0 });
+    showToast('↺ Counter direset');
+  }
+
+  // ── Update ticker ───────────────────────────────────────────────────────────
+  function updateTicker() {
+    const text = document.getElementById('ctrl-ticker-text').value.trim();
+    if (!text) return;
+    bc.postMessage({ action: 'ticker_update', slot: 'ticker', value: text });
+    showToast('📰 Ticker diperbarui!');
+  }
+
+  // ── Toast ───────────────────────────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  // ── Load ticker text dari URL param ────────────────────────────────────────
+  const p = new URLSearchParams(window.location.search);
+  const initTicker = p.get('ticker');
+  if (initTicker) {
+    document.getElementById('ctrl-ticker-text').value = decodeURIComponent(initTicker).replace(/\|/g, ' | ');
+  }
+</script>
+</body>
+</html>
