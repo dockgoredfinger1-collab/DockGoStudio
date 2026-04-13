@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stream Overlay</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    background: transparent;
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+  /* Background video */
+  #bg-video {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* Semua overlay slot */
+  .overlay-slot {
+    position: absolute;
+    z-index: 10;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+
+  .overlay-slot.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.95);
+  }
+
+  .overlay-slot iframe {
+    border: none;
+    background: transparent;
+    display: block;
+  }
+
+  /* Posisi default tiap slot */
+  #slot-alert {
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 300px;
+  }
+  #slot-alert.hidden {
+    transform: translateX(-50%) scale(0.95);
+  }
+
+  #slot-leaderboard {
+    top: 40px;
+    right: 40px;
+    width: 320px;
+    height: 500px;
+  }
+
+  #slot-ticker {
+    bottom: 0;
+    left: 0;
+    width: 1920px;
+    height: 60px;
+  }
+
+  #slot-tiktok {
+    top: 40px;
+    left: 40px;
+    width: 280px;
+    height: 160px;
+  }
+
+  #slot-custom1 {
+    top: 220px;
+    left: 40px;
+    width: 280px;
+    height: 200px;
+  }
+
+  #slot-custom2 {
+    bottom: 80px;
+    right: 40px;
+    width: 280px;
+    height: 200px;
+  }
+
+  /* TikTok counter widget (built-in jika tidak ada URL) */
+  #slot-tiktok .tiktok-counter {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(0,0,0,0.75), rgba(20,20,20,0.85));
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    color: white;
+    gap: 4px;
+  }
+
+  .tiktok-counter .icon {
+    font-size: 28px;
+    margin-bottom: 4px;
+  }
+
+  .tiktok-counter .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.6;
+    font-weight: 500;
+  }
+
+  .tiktok-counter .count {
+    font-size: 36px;
+    font-weight: 800;
+    background: linear-gradient(90deg, #ff0050, #00f2ea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+
+  .tiktok-counter .live-badge {
+    background: #ff0050;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+    margin-top: 4px;
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* Ticker built-in */
+  #slot-ticker .ticker-wrap {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(0,0,0,0.85), rgba(15,15,15,0.9), rgba(0,0,0,0.85));
+    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+  }
+
+  .ticker-label {
+    flex-shrink: 0;
+    background: linear-gradient(90deg, #ff0050, #ff6b35);
+    color: white;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    padding: 0 20px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .ticker-track {
+    flex: 1;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    align-items: center;
+  }
+
+  .ticker-content {
+    white-space: nowrap;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    animation: tickerScroll 30s linear infinite;
+    padding-left: 100%;
+  }
+
+  @keyframes tickerScroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+  }
+
+  .ticker-sep {
+    display: inline-block;
+    margin: 0 30px;
+    color: #ff0050;
+    font-weight: 900;
+  }
+</style>
+</head>
+<body>
+
+<!-- Background Video -->
+<video id="bg-video" autoplay muted loop playsinline>
+  <!-- src diisi dari config via URL param -->
+</video>
+
+<!-- SLOT: Saweria Alert -->
+<div class="overlay-slot" id="slot-alert">
+  <iframe id="iframe-alert" width="600" height="300" allowtransparency="true"></iframe>
+</div>
+
+<!-- SLOT: Saweria Leaderboard -->
+<div class="overlay-slot" id="slot-leaderboard">
+  <iframe id="iframe-leaderboard" width="320" height="500" allowtransparency="true"></iframe>
+</div>
+
+<!-- SLOT: Running Text / Ticker -->
+<div class="overlay-slot" id="slot-ticker">
+  <div id="ticker-builtin" class="ticker-wrap">
+    <div class="ticker-label">📢 INFO</div>
+    <div class="ticker-track">
+      <div class="ticker-content" id="ticker-text">
+        Selamat datang di stream! &nbsp;<span class="ticker-sep">✦</span>&nbsp; Jangan lupa follow dan subscribe! &nbsp;<span class="ticker-sep">✦</span>&nbsp; Support via Saweria! &nbsp;<span class="ticker-sep">✦</span>&nbsp;
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLOT: TikTok Tap Counter -->
+<div class="overlay-slot" id="slot-tiktok">
+  <div class="tiktok-counter" id="tiktok-widget">
+    <div class="icon">🎵</div>
+    <div class="label">TikTok Taps</div>
+    <div class="count" id="tiktok-count">0</div>
+    <div class="live-badge">LIVE</div>
+  </div>
+</div>
+
+<!-- SLOT: Custom 1 -->
+<div class="overlay-slot" id="slot-custom1">
+  <iframe id="iframe-custom1" width="280" height="200" allowtransparency="true"></iframe>
+</div>
+
+<!-- SLOT: Custom 2 -->
+<div class="overlay-slot" id="slot-custom2">
+  <iframe id="iframe-custom2" width="280" height="200" allowtransparency="true"></iframe>
+</div>
+
+<script>
+  // ─── Baca config dari URL params ───────────────────────────────────────────
+  const p = new URLSearchParams(window.location.search);
+
+  // Video background
+  const videoSrc = p.get('video');
+  if (videoSrc) {
+    document.getElementById('bg-video').src = decodeURIComponent(videoSrc);
+  }
+
+  // iFrame URLs
+  const iframes = {
+    alert:      { id: 'iframe-alert',      param: 'alert' },
+    leaderboard:{ id: 'iframe-leaderboard',param: 'leaderboard' },
+    custom1:    { id: 'iframe-custom1',    param: 'custom1' },
+    custom2:    { id: 'iframe-custom2',    param: 'custom2' },
+  };
+
+  for (const [key, cfg] of Object.entries(iframes)) {
+    const url = p.get(cfg.param);
+    if (url) document.getElementById(cfg.id).src = decodeURIComponent(url);
+  }
+
+  // Ticker text
+  const tickerText = p.get('ticker');
+  if (tickerText) {
+    const decoded = decodeURIComponent(tickerText);
+    document.getElementById('ticker-text').innerHTML =
+      decoded.split('|').map(t =>
+        `${t.trim()} <span class="ticker-sep">✦</span>`
+      ).join('&nbsp;&nbsp;');
+  }
+
+  // TikTok counter URL (iframe) atau gunakan built-in counter
+  const tiktokUrl = p.get('tiktok');
+  if (tiktokUrl) {
+    const slot = document.getElementById('slot-tiktok');
+    slot.innerHTML = `<iframe src="${decodeURIComponent(tiktokUrl)}" width="280" height="160" frameborder="0" allowtransparency="true"></iframe>`;
+  }
+
+  // ─── Visibility state dari hidden slots ────────────────────────────────────
+  const hiddenSlots = (p.get('hidden') || '').split(',').filter(Boolean);
+  hiddenSlots.forEach(slotId => {
+    const el = document.getElementById('slot-' + slotId);
+    if (el) el.classList.add('hidden');
+  });
+
+  // ─── BroadcastChannel: terima perintah toggle dari control.html ────────────
+  const bc = new BroadcastChannel('overlay_control');
+  bc.onmessage = (e) => {
+    const { action, slot, value } = e.data;
+
+    if (action === 'toggle') {
+      const el = document.getElementById('slot-' + slot);
+      if (!el) return;
+      if (value === 'show') el.classList.remove('hidden');
+      else if (value === 'hide') el.classList.add('hidden');
+      else el.classList.toggle('hidden');
+    }
+
+    if (action === 'tiktok_count') {
+      document.getElementById('tiktok-count').textContent = value;
+    }
+
+    if (action === 'ticker_update') {
+      document.getElementById('ticker-text').innerHTML =
+        value.split('|').map(t =>
+          `${t.trim()} <span class="ticker-sep">✦</span>`
+        ).join('&nbsp;&nbsp;');
+    }
+  };
+
+  // ─── TikTok built-in counter: update tiap 30 detik dari API sederhana ──────
+  // Jika ada endpoint custom, bisa diset via param tiktok_api
+  const tiktokApi = p.get('tiktok_api');
+  if (tiktokApi && !tiktokUrl) {
+    const updateTiktok = async () => {
+      try {
+        const res = await fetch(decodeURIComponent(tiktokApi));
+        const json = await res.json();
+        const count = json.count ?? json.tap_count ?? json.total ?? 0;
+        document.getElementById('tiktok-count').textContent =
+          count >= 1000 ? (count/1000).toFixed(1)+'K' : count;
+      } catch(e) {}
+    };
+    updateTiktok();
+    setInterval(updateTiktok, 30000);
+  }
+</script>
+</body>
+</html>
